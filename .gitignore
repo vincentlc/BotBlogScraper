@@ -69,6 +69,7 @@ backup/
 *.pem
 *.key
 config.private.py
+content-update-bot.service
 
 # Operating System
 .DS_Store

@@ -13,28 +13,39 @@ fi
 SERVICE_NAME="content-update-bot"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
+CURRENT_USER=$(logname)
 
 # Create virtual environment if it doesn't exist
-if [ ! -d "${SCRIPT_DIR}/.venv" ]; then
+if [ ! -d "${SCRIPT_DIR}/venv" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv "${SCRIPT_DIR}/.venv"
+    python3 -m venv "${SCRIPT_DIR}/venv"
+    "${SCRIPT_DIR}/venv/bin/pip" install -e "${SCRIPT_DIR}"
 fi
 
-# Install package and dependencies
-echo "Installing package and dependencies..."
-"${SCRIPT_DIR}/.venv/bin/pip" install -e "${SCRIPT_DIR}"
+# Create environment file with restricted permissions
+echo "Creating environment file..."
+cat "${SCRIPT_DIR}/deploy/content-update-bot.env.template" | \
+    sed "s|/home/vincent|${SCRIPT_DIR}|g" > /etc/default/content-update-bot
+chmod 600 /etc/default/content-update-bot
 
-# Copy service file
+# Install and configure the wrapper script
+echo "Installing wrapper script..."
+cat "${SCRIPT_DIR}/deploy/content-update-bot-run" > /usr/local/bin/content-update-bot-run
+chmod 755 /usr/local/bin/content-update-bot-run
+
+# Install the service with current user
 echo "Installing systemd service..."
-cp "${SCRIPT_DIR}/${SERVICE_NAME}.service" "$SERVICE_PATH"
+cat "${SCRIPT_DIR}/deploy/content-update-bot.service.template" | \
+    sed "s/%USER%/$CURRENT_USER/g" > "$SERVICE_PATH"
 
 # Reload systemd
+echo "Reloading systemd..."
 systemctl daemon-reload
 
 # Enable and start service
 echo "Enabling and starting service..."
 systemctl enable "$SERVICE_NAME"
-systemctl start "$SERVICE_NAME"
+systemctl restart "$SERVICE_NAME"
 
 echo "Installation complete! Service status:"
 systemctl status "$SERVICE_NAME"
