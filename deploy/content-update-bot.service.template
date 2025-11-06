@@ -1,0 +1,22 @@
+[Unit]
+Description=Content Update Bot
+After=network.target
+
+[Service]
+Type=simple
+User=%USER%
+Group=%USER%
+EnvironmentFile=/etc/default/content-update-bot
+ExecStart=/usr/local/bin/content-update-bot-run
+Restart=always
+RestartSec=30
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+ProtectHome=read-only
+ReadWritePaths=${BOT_STORAGE_PATH} ${BOT_LOG_PATH}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Wrapper script for content-update-bot
+source /etc/default/content-update-bot
+
+# Activate virtual environment and run the bot
+$BOT_VENV/bin/python $BOT_HOME/main.py
