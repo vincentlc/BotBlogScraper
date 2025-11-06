@@ -1,7 +1,57 @@
 #!/bin/bash
 
 # Wrapper script for content-update-bot
-source /etc/default/content-update-bot
+ENV_FILE="/etc/default/content-update-bot"
 
-# Activate virtual environment and run the bot
-$BOT_VENV/bin/python $BOT_HOME/main.py
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+if [ ! -r "$ENV_FILE" ]; then
+    echo "Error: Cannot read environment file at $ENV_FILE (permission denied)"
+    exit 1
+fi
+
+set -a
+source "$ENV_FILE"
+set +a
+
+# Debug output
+echo "Debug: Environment loaded"
+echo "BOT_HOME=$BOT_HOME"
+echo "BOT_VENV=$BOT_VENV"
+
+# Verify required variables
+if [ -z "$BOT_HOME" ]; then
+    echo "Error: BOT_HOME environment variable not set"
+    exit 1
+fi
+
+if [ -z "$BOT_VENV" ]; then
+    echo "Error: BOT_VENV environment variable not set"
+    exit 1
+fi
+
+# Verify directories exist
+if [ ! -d "$BOT_HOME" ]; then
+    echo "Error: BOT_HOME directory does not exist: $BOT_HOME"
+    exit 1
+fi
+
+if [ ! -d "$BOT_VENV" ]; then
+    echo "Error: Virtual environment directory does not exist: $BOT_VENV"
+    exit 1
+fi
+
+# Verify Python exists in virtual environment
+if [ ! -f "$BOT_VENV/bin/python" ]; then
+    echo "Error: Python not found in virtual environment at $BOT_VENV"
+    exit 1
+fi
+
+# Change to bot directory
+cd "$BOT_HOME" || exit 1
+
+# Execute the bot with the virtual environment Python
+exec "$BOT_VENV/bin/python" "$BOT_HOME/main.py"

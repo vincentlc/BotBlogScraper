@@ -15,8 +15,7 @@ RestartSec=30
 NoNewPrivileges=yes
 ProtectSystem=strict
 PrivateTmp=yes
-ProtectHome=read-only
-ReadWritePaths=${BOT_STORAGE_PATH} ${BOT_LOG_PATH}
+ReadWritePaths=${BOT_STORAGE_PATH} /var/log/content-update-bot
 
 [Install]
 WantedBy=multi-user.target
