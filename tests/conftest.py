@@ -1,7 +1,8 @@
 import pytest
 import os
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, create_autospec
+from contextlib import asynccontextmanager
 
 from src.config.config import Config
 from src.scrapers.base import ScrapedItem
@@ -41,6 +42,6 @@ def mock_response():
 def mock_session():
     """Provides a mock aiohttp ClientSession"""
     mock = AsyncMock()
-    mock.__aenter__ = AsyncMock()
-    mock.__aexit__ = AsyncMock()
+    mock.__aenter__.return_value = mock
+    mock.__aexit__.return_value = None
     return mock

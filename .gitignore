@@ -71,6 +71,12 @@ backup/
 config.private.py
 content-update-bot.service
 
+# Private scraper initializer (should not be committed)
+src/scrapers/scraper_init.py
+
 # Operating System
 .DS_Store
 Thumbs.db
+
+# docs info private
+docs

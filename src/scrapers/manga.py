@@ -39,22 +39,27 @@ class MangaScraper(BaseScraper):
                     list_chapter = [li.get('data-num') for li in chapter_items]
                     # logging.info(f"{list_chapter}")
                     data_nums = [math.trunc(float(li.get('data-num').split(" ")[0])) for li in chapter_items]
-                    latest_num = max(data_nums) if data_nums else 0
                     
-                    if latest_num == 0:
-                        return None
-                    latest_chapter = [s for s in list_chapter if str(latest_num) in s]
-                    if "RAW" in latest_chapter[0] or "Oneshot" in latest_chapter[0]:
-                        logging.info(f"Skipping latest chapter {latest_num} due to RAW/Oneshot tag")
-                        return None
-                        
-                    return ScrapedItem(
-                        id=str(latest_num),
-                        title=f"{self.manga_name.title()} Chapter {latest_num}",
-                        url=f"{self.base_url}/{self.manga_name}-{latest_num}",
-                        timestamp=datetime.now(),
-                        content={"chapter_number": latest_num}
-                    )
+                    # Sort chapters in descending order and find first valid (non-RAW, non-Oneshot)
+                    sorted_chapters = sorted(zip(data_nums, list_chapter), key=lambda x: x[0], reverse=True)
+                    
+                    for chapter_num, chapter_str in sorted_chapters:
+                        if chapter_num == 0:
+                            continue
+                        if "RAW" in chapter_str or "Oneshot" in chapter_str:
+                            logging.info(f"Skipping chapter {chapter_num} due to RAW/Oneshot tag")
+                            continue
+                        # Found a valid chapter
+                        return ScrapedItem(
+                            id=str(chapter_num),
+                            title=f"{self.manga_name.title()} Chapter {chapter_num}",
+                            url=f"{self.base_url}/{self.manga_name}-{chapter_num}",
+                            timestamp=datetime.now(),
+                            content={"chapter_number": chapter_num}
+                        )
+                    
+                    # No valid chapter found
+                    return None
                     
         except Exception as e:
             logging.error(f"Error fetching manga chapter: {e}")

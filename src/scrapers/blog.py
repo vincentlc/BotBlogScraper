@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional
 import logging
 import feedparser
-from urllib.parse import urljoin
 
 from .base import BaseScraper, ScrapedItem
 

@@ -1,6 +1,20 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
+from contextlib import asynccontextmanager
 from src.scrapers.manga import MangaScraper
+
+
+class AsyncContextManagerMock:
+    """A mock that properly acts as an async context manager"""
+    def __init__(self, return_value):
+        self.return_value = return_value
+    
+    async def __aenter__(self):
+        return self.return_value
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return None
+
 
 @pytest.mark.asyncio
 async def test_manga_scraper_fetch_latest():
@@ -19,13 +33,18 @@ async def test_manga_scraper_fetch_latest():
         </html>
     """)
     
-    # Create mock session
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = mock_session
-    mock_session.get.return_value.__aenter__.return_value = mock_response
+    # Create mock session instance
+    mock_session_instance = MagicMock()
+    mock_session_instance.get.return_value = AsyncContextManagerMock(mock_response)
+    
+    # Create mock session class that returns the instance
+    mock_session_class = MagicMock(return_value=mock_session_instance)
+    # Make the session class itself an async context manager
+    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
     
     # Test
-    with patch('aiohttp.ClientSession', return_value=mock_session):
+    with patch('src.scrapers.manga.aiohttp.ClientSession', mock_session_class):
         result = await scraper.fetch_latest()
     
     # Assert
@@ -79,13 +98,17 @@ async def test_skip_raw_chapter():
         </html>
     """)
     
-    # Create mock session
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = mock_session
-    mock_session.get.return_value.__aenter__.return_value = mock_response
+    # Create mock session instance
+    mock_session_instance = MagicMock()
+    mock_session_instance.get.return_value = AsyncContextManagerMock(mock_response)
+    
+    # Create mock session class that returns the instance
+    mock_session_class = MagicMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
     
     # Test
-    with patch('aiohttp.ClientSession', return_value=mock_session):
+    with patch('src.scrapers.manga.aiohttp.ClientSession', mock_session_class):
         result = await scraper.fetch_latest()
     
     # Verify that we get chapter 122 instead of RAW 123
@@ -108,13 +131,17 @@ async def test_skip_oneshot_chapter():
         </html>
     """)
     
-    # Create mock session
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = mock_session
-    mock_session.get.return_value.__aenter__.return_value = mock_response
+    # Create mock session instance
+    mock_session_instance = MagicMock()
+    mock_session_instance.get.return_value = AsyncContextManagerMock(mock_response)
+    
+    # Create mock session class that returns the instance
+    mock_session_class = MagicMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
     
     # Test
-    with patch('aiohttp.ClientSession', return_value=mock_session):
+    with patch('src.scrapers.manga.aiohttp.ClientSession', mock_session_class):
         result = await scraper.fetch_latest()
     
     # Verify that we get chapter 2 instead of Oneshot

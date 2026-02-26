@@ -3,6 +3,7 @@ import logging
 from src.config.config import Config
 from src.scrapers.manga import MangaScraper
 from src.scrapers.blog import BlogScraper
+from src.scrapers.social_media import SocialMediaScraper
 from src.storage.handler import StorageHandler
 from src.notifications.handler import NotificationHandler
 from src.bot.manager import BotManager
@@ -26,17 +27,24 @@ def main():
     notifier = NotificationHandler(telegram_config=config.telegram)
     storage = StorageHandler(storage_dir=config.scraper.storage_dir)
     
-    # Initialize scrapers
-    scrapers = [
-        MangaScraper(
-            manga_name="one-piece",
-            base_url="https://www.lelmanga.com"
-        ),
-        BlogScraper(
-            feed_url="https://leo.prie.to/tag/essay/feed",
-            site_name="Leo's Essays"
-        )
-    ]
+    # Initialize scrapers, prefer a private initializer if available
+    try:
+        from src.scrapers.scraper_init import get_scrapers  # pragma: no cover - optional private file
+        scrapers = get_scrapers(config)
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        logging.warning("Private scraper initializer not found or invalid, using default scrapers.")
+        scrapers = [
+            # Example blog scraper
+            BlogScraper(
+                feed_url="https://leo.prie.to/tag/essay/feed",
+                site_name="Leo's Essays"
+            ),
+            # Example manga scraper
+            MangaScraper(
+                manga_name="one-piece",
+                base_url="https://www.lelmanga.com"
+            )
+        ]
     
     # Initialize bot manager
     bot = BotManager(
