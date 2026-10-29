@@ -39,7 +39,7 @@ TELEGRAM_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 CHECK_INTERVAL=300  # Optional, defaults to 300 seconds
 STORAGE_DIR=storage  # Optional, defaults to 'storage'
-LOG_FILE=bot.log  # Optional, defaults to 'bot.log'
+LOG_FILE=bot.log  # Optional, defaults to 'bot.log'. On the systemd deployment this is set from BOT_LOG_PATH (see deploy/content-update-bot.env.template) so logs land in /var/log, not $HOME.
 LOG_LEVEL=INFO  # Optional, defaults to 'INFO'
 ```
 

@@ -148,3 +148,54 @@ async def test_skip_oneshot_chapter():
     assert result is not None
     assert result.id == "2"
     assert result.content["chapter_number"] == 2
+
+
+@pytest.mark.asyncio
+async def test_skip_chapter_with_raw_banner_on_page():
+    """Test that a chapter is skipped when its own page shows the RAW banner,
+    even though the listing no longer tags it with 'RAW'."""
+    scraper = MangaScraper("one-piece", "https://www.lelmanga.com")
+
+    listing_response = AsyncMock()
+    listing_response.status = 200
+    listing_response.text = AsyncMock(return_value="""
+        <html>
+            <li data-num="1197">Chapter 1197</li>
+            <li data-num="1196">Chapter 1196</li>
+        </html>
+    """)
+
+    raw_chapter_page = AsyncMock()
+    raw_chapter_page.status = 200
+    raw_chapter_page.text = AsyncMock(return_value="""
+        <html>
+            <p>Attention : La version que vous lisez maintenant est RAW.
+            La version francaise sera bientot disponible !</p>
+        </html>
+    """)
+
+    translated_chapter_page = AsyncMock()
+    translated_chapter_page.status = 200
+    translated_chapter_page.text = AsyncMock(return_value="<html><p>Chapter content</p></html>")
+
+    responses_by_url = {
+        "https://www.lelmanga.com/manga/one-piece": listing_response,
+        "https://www.lelmanga.com/one-piece-1197": raw_chapter_page,
+        "https://www.lelmanga.com/one-piece-1196": translated_chapter_page,
+    }
+
+    mock_session_instance = MagicMock()
+    mock_session_instance.get.side_effect = lambda url: AsyncContextManagerMock(responses_by_url[url])
+
+    mock_session_class = MagicMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with patch('src.scrapers.manga.aiohttp.ClientSession', mock_session_class):
+        result = await scraper.fetch_latest()
+
+    # Chapter 1197 still has the RAW banner on its own page, so we should fall
+    # back to chapter 1196 instead.
+    assert result is not None
+    assert result.id == "1196"
+    assert result.content["chapter_number"] == 1196

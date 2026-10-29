@@ -43,6 +43,10 @@ def main():
             MangaScraper(
                 manga_name="one-piece",
                 base_url="https://www.lelmanga.com"
+            ),
+            MangaScraper(
+                manga_name="hunter-x-hunter",
+                base_url="https://www.lelmanga.com"
             )
         ]
     
